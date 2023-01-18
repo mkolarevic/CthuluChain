@@ -1,6 +1,7 @@
 import { Client } from '@hashgraph/sdk'
-
-require('dotenv').config();
+import { createAccount } from './account.js'
+import dotenv from 'dotenv'
+dotenv.config()
 
 async function main() {
   const accountId = process.env.ACCOUNT_ID;
@@ -13,6 +14,11 @@ async function main() {
   const client = Client.forTestnet();
 
   client.setOperator(accountId, privateKey);
+
+  for (let index = 1; index < 6; index++) {
+    const name = `Account${index}:`
+    await createAccount(client, name);
+  }
 }
 
 main()
