@@ -1,0 +1,23 @@
+{
+  "name": "cthuluchain",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mkolarevic/CthuluChain.git"
+  },
+  "author": "Beđa & Kole",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mkolarevic/CthuluChain/issues"
+  },
+  "homepage": "https://github.com/mkolarevic/CthuluChain#readme",
+  "dependencies": {
+    "@hashgraph/sdk": "^2.19.2",
+    "dotenv": "^16.0.3"
+  }
+}
