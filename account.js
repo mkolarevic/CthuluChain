@@ -1,11 +1,31 @@
-import { PrivateKey, AccountCreateTransaction, AccountBalanceQuery, Hbar } from "@hashgraph/sdk";
+import { PrivateKey, AccountCreateTransaction, AccountBalanceQuery, Hbar, PublicKey } from "@hashgraph/sdk";
 import dotenv from 'dotenv'
 dotenv.config()
 import fs from 'fs'
 
-const fileName = 'accounts.txt'
+const fileName = 'accounts.json'
 
-export async function createAccount(client, name) {
+/**
+ * Attempts to return an array of account IDs from the specified file.
+ * Returns an empty array if the file doesn't exist
+ * @param {string} filePath
+ * @returns {Promise<Array<string>>}
+ */
+export async function readFromFile(filePath) {
+  try {
+    const accs = fs.readFileSync(filePath);
+    return JSON.parse(accs)?.accounts
+  } catch (error) {
+    return []
+  }
+}
+
+/**
+ * Creates an account and returns it's ID and keys
+ * @param {Client} client Hedera Client object
+ * @returns {Promise<Object>}
+ */
+export async function createAccount(client) {
 
   const newAccountPrivateKey = PrivateKey.generateED25519();
   const newAccountPublicKey = newAccountPrivateKey.publicKey;
@@ -19,32 +39,24 @@ export async function createAccount(client, name) {
   const getReceipt = await newAccount.getReceipt(client);
   const newAccountId = getReceipt.accountId;
 
-  const accountBuf = `${name} ${newAccountId.shard.low}.${newAccountId.realm.low}.${newAccountId.num.low}\n`
-
-  console.log(newAccountId)
-
-  //Log the account ID
-  console.log("The new account ID is: " + accountBuf);
+  const id = `${newAccountId.shard.low}.${newAccountId.realm.low}.${newAccountId.num.low}`
+  const acc = {
+    id,
+    privateKey: newAccountPrivateKey.toStringRaw(),
+    publicKey: newAccountPublicKey.toStringRaw(),
+  }
 
   try {
-    fs.appendFileSync(fileName, accountBuf)
+    const data = fs.readFileSync(fileName)
+    let accData = JSON.parse(data);
+    accData.accounts.push(acc)
+    fs.writeFileSync(fileName, JSON.stringify(accData, null, 2))
   } catch (error) {
-    fs.writeFileSync(fileName, accountBuf)
-  }
-  //Verify the account balance
-  let accountBalance;
-  if (newAccountId) {
-    accountBalance = await new AccountBalanceQuery()
-      .setAccountId(newAccountId)
-      .execute(client);
-    console.log("The new account balance is: " + accountBalance.hbars.toTinybars() + " tinybar.");
+    let accData = {
+      accounts: [acc]
+    }
+    fs.writeFileSync(fileName, JSON.stringify(accData, null, 2))
   }
 
-  return {
-    newAccountPrivateKey,
-    newAccountPublicKey,
-    newAccount,
-    getReceipt,
-    newAccountId
-  }
+  return acc
 }
