@@ -11,7 +11,7 @@ const fileName = 'accounts.json'
  * @param {string} filePath
  * @returns {Promise<Array<string>>}
  */
-export async function readFromFile(filePath) {
+export function readFromFile(filePath) {
   try {
     const accs = fs.readFileSync(filePath);
     return JSON.parse(accs)?.accounts
@@ -33,6 +33,7 @@ export async function createAccount(client) {
   //Create a new account
   const newAccount = await new AccountCreateTransaction()
     .setKey(newAccountPublicKey)
+    .setInitialBalance(20)
     .execute(client);
 
   // Get the new account ID
