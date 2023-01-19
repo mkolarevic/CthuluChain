@@ -8,6 +8,7 @@ import {
   CustomRoyaltyFee,
   CustomFixedFee,
   Hbar,
+  TokenAssociateTransaction,
 } from "@hashgraph/sdk";
 import dotenv from 'dotenv'
 dotenv.config()
@@ -122,4 +123,38 @@ export async function mintNft(tokenId, supplyKey, amount = 1, treasuryId, treasu
   }
 
   return receipts
+}
+
+/**
+ * 
+ * @param {string} tokenId Token ID (0.0.xxx)
+ * 
+ * @typedef {Object} account
+ * @property {string} accountId Account ID
+ * @property {string} accountPk Private key
+ * @param {account} account Object containing ID and private key
+ * 
+ * @typedef {Object} treasury
+ * @property {string} treasuryId Account ID
+ * @property {string} treasuryPk Private key
+ * @param {treasury} treasury Object containing ID and private key
+ * 
+ * @returns {Promise<Object>} Returns receipt object
+ */
+export async function associateNftToAccount(tokenId, { accountId, accountPk }, { treasuryId, treasuryPk }) {
+  const client = Client.forName('testnet');
+  client.setOperator(treasuryId, treasuryPk);
+
+  const transaction = await new TokenAssociateTransaction()
+    .setAccountId(accountId)
+    .setTokenIds([tokenId])
+    .freezeWith(client)
+    .sign(accountPk);
+
+  const transactionSubmit = await transaction.execute(client);
+  const transactionReceipt = await transactionSubmit.getReceipt(client);
+
+  console.log(`- NFT association with Alice's account: ${transactionReceipt.status}\n`);
+
+  return transactionReceipt;
 }

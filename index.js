@@ -1,9 +1,9 @@
 import { Client, PrivateKey } from '@hashgraph/sdk'
 import { createAccount, readFromFile, transferFunds } from './account.js'
-import dotenv from 'dotenv'
+import { mintNft, createNft, associateNftToAccount } from './nft.js';
 import { processScheduled, scheduledTransaction } from './scheduled.js';
+import dotenv from 'dotenv'
 
-import { mintNft, createNft } from './nft.js';
 dotenv.config()
 
 async function _fund(accountId, accountList) {
@@ -26,8 +26,14 @@ async function _nft(accountList) {
     privateKey: PrivateKey.fromString(accountList[0].privateKey)
   }
 
+  const account3 = {
+    id: accountList[2].id,
+    privateKey: PrivateKey.fromString(accountList[2].privateKey)
+  }
+
   const supplyKey = PrivateKey.generate();
 
+  // Create NFTs
   const tokenId = await createNft({
     name: 'Worship Token',
     symbol: 'CTH',
@@ -41,10 +47,18 @@ async function _nft(accountList) {
     fallbackFee: 2
   })
 
+  // Mint NFTs
   const mintedNfts = await mintNft(tokenId, supplyKey, 5, treasuryAccount.id, treasuryAccount.privateKey)
 
   console.log({ mintedNfts, supplyKey: supplyKey.toStringRaw() })
-  return mintedNfts;
+
+  await associateNftToAccount(tokenId, {
+    accountId: account3.id,
+    accountPk: account3.privateKey,
+  }, {
+    treasuryId: treasuryAccount.id,
+    treasuryPk: treasuryAccount.privateKey
+  })
 }
 
 async function main() {
