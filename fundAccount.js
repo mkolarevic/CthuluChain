@@ -3,7 +3,7 @@ import { readFromFile } from './account.js'
 import dotenv from 'dotenv'
 
 
-async function fund() {
+async function main() {
   const accNum = parseInt(process.argv[2]) - 1;
   const amount = parseInt(process.argv[3]) || 10;
 
@@ -26,6 +26,6 @@ async function fund() {
 
 dotenv.config()
 
-await fund()
+await main()
 
 process.exit(0)

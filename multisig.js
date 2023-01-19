@@ -1,7 +1,7 @@
 import { AccountId, Hbar, TransferTransaction, Client, PrivateKey, ScheduleSignTransaction, ScheduleCreateTransaction } from "@hashgraph/sdk";
 import { readFromFile } from "./account.js";
 
-export async function multiSigTrx() {
+export async function main() {
 
   const accs = readFromFile(process.env.ACCOUNTS_FILE);
 
@@ -9,7 +9,7 @@ export async function multiSigTrx() {
   let acc2 = accs[1];
   let acc3 = accs[2];
 
-  // Account 1 is the treasury
+  // Account1 is the treasury
   const treasuryClient = Client.forName('testnet')
     .setOperator(acc1.id, acc1.privateKey);
 
@@ -23,21 +23,22 @@ export async function multiSigTrx() {
 
   // Create the multisig transfer transaction, freeze it and sign it
   const trx = new TransferTransaction()
-    .addHbarTransfer(acc1.id, -15)
-    .addHbarTransfer(acc3.id, 15)
-    .setTransactionMemo('Buy something')
-    .setNodeAccountIds([AccountId.fromString(acc1.id), AccountId.fromString(acc2.id), AccountId.fromString(acc3.id)]);
+    .addHbarTransfer(acc1.id, -3)
+    .addHbarTransfer(acc3.id, 3)
+    .addHbarTransfer(acc2.id, -3)
+    .addHbarTransfer(acc3.id, 3)
+    .setTransactionMemo('Buy something beautiful');
 
   // Schedule the multisig inside a scheduled tx using the Account2 client
   // Set the admin key to be the key of Account1
   const scheduleTransaction = await new ScheduleCreateTransaction()
     .setScheduledTransaction(trx)
-    .setScheduleMemo("Please don't lose this")
+    .setScheduleMemo("Please don't lose this pls")
     .setAdminKey(PrivateKey.fromString(acc2.privateKey))
     .setTransactionMemo('Desi batice')
     .execute(client);
 
-  const scheduledReceipt = await scheduleTransaction.getReceipt(treasuryClient);
+  const scheduledReceipt = await scheduleTransaction.getReceipt(client);
 
   // Freeze the tx with the treasury client and sign it
   const transactionTreasury = await new ScheduleSignTransaction()
@@ -53,11 +54,13 @@ export async function multiSigTrx() {
     .freezeWith(receiverClient)
     .sign(PrivateKey.fromString(acc1.privateKey));
 
-  const submittedReceiver = await transactionReceiver.execute(receiverClient);
-  console.log(submittedReceiver)
+  const submittedReceiver = await transactionReceiver.execute(client);
+
+  const receipt = await submittedReceiver.getReceipt(client)
+  console.log(receipt)
 
 }
 
-await multiSigTrx();
+await main();
 
 process.exit(0)
