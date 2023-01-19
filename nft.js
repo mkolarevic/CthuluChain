@@ -28,11 +28,7 @@ dotenv.config()
  * @param {string} NftData.feeCollectorAccountId
  * @param {number} [NftData.fallbackFee = 200] Fallback transaction fee
  * 
- * @typedef {Object} transactionData
- * @property {Object} transaction
- * @property {Object} receipt
- * @property {string} tokenId
- * @return {Promise<transactionData>} Object containing the transaction, receipt and tokenId
+ * @return {Promise<string>} Token ID
  */
 export async function createNft({
   name = 'Worship Token',
@@ -67,6 +63,7 @@ export async function createNft({
     .setMaxSupply(maxSupply)
     .setSupplyKey(supplyKey)
     .setCustomFees([customFee])
+    .setMaxTransactionFee(200)
     .freezeWith(client);
 
   //Sign the transaction with the treasury key
@@ -84,11 +81,7 @@ export async function createNft({
   //Log the token ID
   console.log(`- Created NFT with Token ID: ${tokenId} \n`);
 
-  return {
-    transaction: nftCreateSubmit,
-    receipt: nftCreateRx,
-    tokenId
-  }
+  return tokenId
 }
 
 /**
@@ -99,45 +92,34 @@ export async function createNft({
  * @param {string} supplyKey Supply key
  * @param {number} [amount=1] Amount to print
  * 
- * @typedef {Object} mintedNfts
- * @property {Array} mintTx
- * @property {Array} mintTxSign
- * @property {Array} mintTxSubmit
- * @property {Array} mintRx
- * @return {Promise<mintedNfts>} 
+ * @return {Promise<Array>} Receipts for all minted tokens
  */
 export async function mintNft(tokenId, supplyKey, amount = 1, treasuryId, treasuryPk) {
   const client = Client.forName('testnet');
   client.setOperator(treasuryId, treasuryPk);
 
-  const returnData = [];
+  const receipts = [];
 
   for await (const iterator of Array.apply(null, Array(amount)).map((x, i) => i)) {
-    const data = {
-      mintTx: null,
-      mintTxSign: null,
-      mintTxSubmit: null,
-      mintRx: null
-    }
     // Mint new NFT
-    data.mintTx = await new TokenMintTransaction()
+    const mintTx = await new TokenMintTransaction()
       .setTokenId(tokenId)
       .setMetadata([Buffer.from([`NFT ${iterator}`])])
       .freezeWith(client)
 
     //Sign the transaction with the supply key
-    data.mintTxSign = await data.mintTx.sign(supplyKey);
+    const mintTxSign = await mintTx.sign(supplyKey);
 
     //Submit the transaction to a Hedera network
-    data.mintTxSubmit = await data.mintTxSign.execute(client);
+    const mintTxSubmit = await mintTxSign.execute(client);
 
     //Get the transaction receipt
-    data.mintRx = await data.mintTxSubmit.getReceipt(client);
+    const mintRx = await mintTxSubmit.getReceipt(client);
 
     //Log the serial number
-    console.log(`- Created NFT ${tokenId} with serial: ${data.mintRx.serials[0].low} \n`);
-    returnData.push(data)
+    console.log(`- Created NFT ${tokenId} with serial: ${mintRx.serials[0].low} \n`);
+    receipts.push(mintRx)
   }
 
-  return returnData
+  return receipts
 }
