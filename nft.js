@@ -1,29 +1,29 @@
-
 import {
   Client,
-  TokenCreateTransaction,
-  TokenType,
-  TokenSupplyType,
-  TokenMintTransaction,
-  CustomRoyaltyFee,
   CustomFixedFee,
+  CustomRoyaltyFee,
   Hbar,
+  PrivateKey,
   TokenAssociateTransaction,
+  TokenCreateTransaction,
+  TokenMintTransaction,
+  TokenSupplyType,
+  TokenType,
 } from "@hashgraph/sdk";
 import dotenv from 'dotenv'
-dotenv.config()
+import { readFromFile } from './account.js'
 
 /**
  * Creates an NFT
- *
- * @export
- * @param {Object} NftData Object containing all data required to create an NFT
- * @param {string} [NftData.name = 'Worship Token'] Token name
- * @param {string} [NftData.symbol = 'CTH'] Token symbol for identification
- * @param {number} [NftData.decimals = 0] Decimals for the given token
- * @param {number} [NftData.supply = 0] Initial token supply
- * @param {number} [NftData.maxSupply = 5] Maximum supply for the token
- * @param {string} NftData.treasuryId
+*
+* @export
+* @param {Object} NftData Object containing all data required to create an NFT
+* @param {string} [NftData.name = 'Worship Token'] Token name
+* @param {string} [NftData.symbol = 'CTH'] Token symbol for identification
+* @param {number} [NftData.decimals = 0] Decimals for the given token
+* @param {number} [NftData.supply = 0] Initial token supply
+* @param {number} [NftData.maxSupply = 5] Maximum supply for the token
+* @param {string} NftData.treasuryId
  * @param {string} NftData.treasuryPk
  * @param {string} NftData.supplyKey
  * @param {string} NftData.feeCollectorAccountId
@@ -158,3 +158,51 @@ export async function associateNftToAccount(tokenId, { accountId, accountPk }, {
 
   return transactionReceipt;
 }
+
+async function main() {
+  // get the list of existing accounts
+  const filePath = process.env.ACCOUNTS_FILE
+  let accountList = readFromFile(filePath);
+
+  const treasuryAccount = {
+    id: accountList[0].id,
+    privateKey: PrivateKey.fromString(accountList[0].privateKey)
+  }
+
+  const account3 = {
+    id: accountList[2].id,
+    privateKey: PrivateKey.fromString(accountList[2].privateKey)
+  }
+
+  const supplyKey = PrivateKey.generate();
+
+  // Create NFTs
+  const tokenId = await createNft({
+    name: 'Worship Token',
+    symbol: 'CTH',
+    decimals: 0,
+    supply: 0,
+    maxSupply: 5,
+    treasuryId: treasuryAccount.id,
+    treasuryPk: treasuryAccount.privateKey,
+    supplyKey,
+    feeCollectorAccountId: accountList[1].id,
+    fallbackFee: 2
+  })
+
+  // Mint NFTs
+  const mintedNfts = await mintNft(tokenId, supplyKey, 5, treasuryAccount.id, treasuryAccount.privateKey)
+
+  console.log({ mintedNfts, supplyKey: supplyKey.toStringRaw() })
+
+  await associateNftToAccount(tokenId, {
+    accountId: account3.id,
+    accountPk: account3.privateKey,
+  }, {
+    treasuryId: treasuryAccount.id,
+    treasuryPk: treasuryAccount.privateKey
+  })
+}
+
+dotenv.config()
+await main();
