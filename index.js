@@ -68,9 +68,9 @@ async function main() {
 
   //await multiSigTrx()
 
-  const serialized = await scheduledTransaction();
+  /* const serialized = await scheduledTransaction();
 
-  await processScheduled(serialized)
+  await processScheduled(serialized) */
 
   process.exit(0)
 }
