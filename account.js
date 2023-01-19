@@ -28,8 +28,6 @@ export function readFromFile(filePath) {
  * @property {string} id Account ID (0.0.xxx)
  * @property {string} privateKey Private key
  * @property {string} publicKey Public key
- * @property {Object} privateKeyObject Private key in object form
- * @property {Object} publicKeyObject Public key in object form
  * @returns {Promise<mintedNfts>} 
  */
 export async function createAccount(client) {
@@ -52,8 +50,6 @@ export async function createAccount(client) {
     id,
     privateKey: newAccountPrivateKey.toStringRaw(),
     publicKey: newAccountPublicKey.toStringRaw(),
-    privateKeyObject: newAccountPrivateKey,
-    publicKeyObject: newAccountPublicKey,
   }
 
   try {
