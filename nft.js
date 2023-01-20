@@ -9,6 +9,8 @@ import {
   TokenMintTransaction,
   TokenSupplyType,
   TokenType,
+  TransferTransaction,
+  AccountBalanceQuery,
 } from "@hashgraph/sdk";
 import dotenv from 'dotenv'
 import { readFromFile } from './account.js'
@@ -154,7 +156,7 @@ export async function associateNftToAccount(tokenId, { accountId, accountPk }, {
   const transactionSubmit = await transaction.execute(client);
   const transactionReceipt = await transactionSubmit.getReceipt(client);
 
-  console.log(`- NFT association with Alice's account: ${transactionReceipt.status}\n`);
+  console.log(`- NFT association with Account3: ${transactionReceipt.status}\n`);
 
   return transactionReceipt;
 }
@@ -202,6 +204,26 @@ async function main() {
     treasuryId: treasuryAccount.id,
     treasuryPk: treasuryAccount.privateKey
   })
+
+  const client = Client.forName('testnet');
+  client.setOperator(treasuryAccount.id, treasuryAccount.privateKey);
+
+  const tokenTransferTx = await new TransferTransaction()
+    .addNftTransfer(tokenId, 2, treasuryAccount.id, account3.id)
+    .freezeWith(client)
+    .sign(treasuryAccount.privateKey);
+
+  const tokenTransferSubmit = await tokenTransferTx.execute(client);
+
+  const tokenTransferRx = await tokenTransferSubmit.getReceipt(client);
+
+  console.log(`\n- NFT transfer from Treasury to Account3: ${tokenTransferRx.status} \n`);
+
+  const treasuryBalance = await new AccountBalanceQuery().setAccountId(treasuryAccount.id).execute(client);
+  console.log(`- Treasury balance: ${treasuryBalance.tokens._map.get(tokenId.toString())} NFTs of ID ${tokenId}`);
+
+  const account3Balance = await new AccountBalanceQuery().setAccountId(account3.id).execute(client);
+  console.log(`- Account3 balance: ${account3Balance.tokens._map.get(tokenId.toString())} NFTs of ID ${tokenId}`);
 }
 
 dotenv.config()
