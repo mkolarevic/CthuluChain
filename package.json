@@ -20,5 +20,12 @@
   "dependencies": {
     "@hashgraph/sdk": "^2.19.2",
     "dotenv": "^16.0.3"
+  },
+  "devDependencies": {
+    "eslint": "^8.32.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-n": "^15.6.1",
+    "eslint-plugin-promise": "^6.1.1"
   }
 }
