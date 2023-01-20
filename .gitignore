@@ -1,3 +1,7 @@
 .env
 node_modules
 accounts.json
+smart-contract/artifacts
+smart-contract/cache
+smart-contract/node_modules
+smart-contract/.env
